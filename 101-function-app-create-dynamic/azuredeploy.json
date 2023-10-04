@@ -27,28 +27,12 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    },
-    "runtime": {
-      "type": "string",
-      "defaultValue": "node",
-      "allowedValues": [
-        "node",
-        "dotnet",
-        "java",
-        "powershell",
-        "python"
-      ],
-      "metadata": {
-        "description": "The language worker runtime to load in the function app."
-      }
     }
   },
   "variables": {
     "functionAppName": "[parameters('appName')]",
-    "hostingPlanName": "[parameters('appName')]",
     "applicationInsightsName": "[parameters('appName')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
-    "functionWorkerRuntime": "[parameters('runtime')]",
     "insightsLocation": {
       "AzureCloud": "eastus",
       "AzureUSGovernment": "usgovvirginia"
@@ -60,23 +44,9 @@
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
         "name": "[parameters('storageAccountType')]"
-      }
-    },
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2019-08-01",
-      "name": "[variables('hostingPlanName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Y1",
-        "tier": "Dynamic"
-      },
-      "properties": {
-        "name": "[variables('hostingPlanName')]",
-        "computeMode": "Dynamic"
       }
     },
     {
@@ -86,12 +56,12 @@
       "location": "[parameters('location')]",
       "kind": "functionapp",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "reserved": true,
         "siteConfig": {
+          "linuxFxVersion": "node|14",
           "appSettings": [
             {
               "name": "AzureWebJobsStorage",
@@ -107,11 +77,7 @@
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~2"
-            },
-            {
-              "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "~10"
+              "value": "~4"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -119,7 +85,7 @@
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "[variables('functionWorkerRuntime')]"
+              "value": "node"
             }
           ]
         }
@@ -135,7 +101,8 @@
       },
       "properties": {
         "ApplicationId": "[variables('applicationInsightsName')]",
-        "Request_Source": "IbizaWebAppExtensionCreate"
+        "Request_Source": "IbizaWebAppExtensionCreate",
+        "Application_Type": "Web"
       }
     }
   ]
